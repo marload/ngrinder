@@ -74,7 +74,16 @@
                 <control-group :class="{ error: errors.has('scriptName'), 'script-control-group': true }" labelMessageKey="perfTest.config.script"
                                :data-step="shownBsTab ? 6 : undefined"
                                :data-intro="shownBsTab ? i18n('intro.config.basic.script') : undefined">
-                    <select2 v-model="test.config.scriptName" name="scriptName" ref="scriptSelect" customStyle="width: 250px;"
+                    <select2 v-model="scriptStorage" name="scriptStorage"
+                             ref="scriptStorageSelect" customStyle="width: 90px;"
+                             @change="changeScriptStorage">
+                        <option value="svn">svn</option>
+                        <option v-for="(gitConfig, index) in config.git"
+                                v-text="`${gitConfig.name} (git)`"
+                                :value="index">
+                        </option>
+                    </select2>
+                    <select2 v-model="test.scriptName" name="scriptName" ref="scriptSelect" customStyle="width: 160px;"
                              :option="{ placeholder: i18n('perfTest.config.scriptInput') }"
                              @change="changeScript"
                              :validationRules="{ required: true, scriptValidation: true }" errStyle="position: absolute;">
@@ -255,6 +264,8 @@
         targetHostIp = '';
         targetHosts = [];
 
+        scriptStorage = 'svn';
+
         maxAgentCount = 0;
         shownBsTab = false;
 
@@ -300,6 +311,10 @@
                 $('[data-toggle="popover"]').popover();
                 this.$refs.rampUp.updateRampUpChart();
             });
+        }
+
+        changeScriptStorage() {
+            // TODO change scripts.
         }
 
         changeMaxAgentCount() {
@@ -388,9 +403,7 @@
 
             this.$validator.extend('regionValidation', {
                 getMessage: () => this.i18n('perfTest.message.region'),
-                validate: () => {
-                    return !this.ngrinder.config.clustered || (this.ngrinder.config.clustered && this.test.config.region !== 'NONE');
-                },
+                validate: () => !this.ngrinder.config.clustered || (this.ngrinder.config.clustered && this.test.config.region !== 'NONE'),
             });
         }
 
