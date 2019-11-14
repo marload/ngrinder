@@ -76,14 +76,14 @@
                                :data-intro="shownBsTab ? i18n('intro.config.basic.script') : undefined">
                     <select2 v-model="scriptStorage" name="scriptStorage"
                              ref="scriptStorageSelect" customStyle="width: 90px;"
-                             @change="changeScriptStorage">
+                             @change="scripts = scriptsMap[scriptStorage]">
                         <option value="svn">svn</option>
-                        <option v-for="(gitConfig, index) in config.git"
-                                v-text="`${gitConfig.name} (git)`"
-                                :value="index">
+                        <option v-for="gitConfig in config.git"
+                                v-text="`${gitConfig.owner}/${gitConfig.repo}`"
+                                :value="`${gitConfig.owner}/${gitConfig.repo}`">
                         </option>
                     </select2>
-                    <select2 v-model="test.scriptName" name="scriptName" ref="scriptSelect" customStyle="width: 160px;"
+                    <select2 v-model="test.config.scriptName" name="scriptName" ref="scriptSelect" customStyle="width: 160px;"
                              :option="{ placeholder: i18n('perfTest.config.scriptInput') }"
                              @change="changeScript"
                              :validationRules="{ required: true, scriptValidation: true }" errStyle="position: absolute;">
@@ -250,12 +250,13 @@
         @Prop({ type: Object, required: true })
         test;
 
-        @Prop({ type: Array, required: true })
-        scripts;
+        @Prop({ type: Object, required: true })
+        scriptsMap;
 
         @Prop({ type: Object, required: true })
         config;
 
+        scripts = [];
         resources = [];
 
         samplingIntervals = [1, 2, 3, 4, 5, 10, 30, 60];
@@ -285,6 +286,8 @@
         agentCountValidationRules = { required: true, agentCountValidation: true, min_value: 0 };
 
         created() {
+            this.scripts = this.scriptsMap.svn;
+            this.loadScriptFromGit();
             this.setCustomValidationRules();
             this.setDurationMS();
             this.changeDuration();
@@ -313,8 +316,20 @@
             });
         }
 
-        changeScriptStorage() {
-            // TODO change scripts.
+        loadScriptFromGit() {
+            this.config.git.forEach(gitConfig => {
+                this.$http.get('/git/api/scripts', {
+                    params: gitConfig,
+                }).then(res => {
+                    const scripts = res.data.map(path => ({
+                            revision: -1,
+                            validated: 0,
+                            pathInShort: this.extractFileName(path),
+                            path,
+                        }));
+                    this.scriptsMap[`${gitConfig.owner}/${gitConfig.repo}`] = scripts;
+                });
+            });
         }
 
         changeMaxAgentCount() {
@@ -495,6 +510,11 @@
             const hostToken = host.split(':');
             this.targetHostIp = hostToken[1] ? hostToken[1] : hostToken[0];
             this.$refs.targetHostInfoModal.show();
+        }
+
+        extractFileName(path) {
+            const pathToken = path.split('/');
+            return pathToken[pathToken.length - 1];
         }
 
         get totalVuser() {
