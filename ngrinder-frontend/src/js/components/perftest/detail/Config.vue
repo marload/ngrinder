@@ -76,7 +76,7 @@
                                :data-intro="shownBsTab ? i18n('intro.config.basic.script') : undefined">
                     <select2 v-model="scriptStorage" name="scriptStorage"
                              ref="scriptStorageSelect" customStyle="width: 90px;"
-                             @change="scripts = scriptsMap[scriptStorage]">
+                             @change="changeScriptStorage">
                         <option value="svn">svn</option>
                         <option v-for="gitConfig in config.git"
                                 v-text="`${gitConfig.owner}/${gitConfig.repo}`"
@@ -95,14 +95,16 @@
                                 :value="script.path">
                         </option>
                     </select2>
-                    <button v-show="display.showScriptBtn" class="btn btn-info float-right btn-script-revision" type="button" @click="showScript">
+                    <button v-show="showRevisonBtn" class="btn btn-info float-right btn-script-revision" type="button" @click="showScript">
                         <i class="fa fa-file mr-1"></i>
                         R
                         <span v-if="test.config.scriptRevision === -1">HEAD</span>
                         <span v-else v-text="test.config.scriptRevision"></span>
                     </button>
+                    <button v-show="display.showGitHubRefreshBtn" class="btn btn-info float-right btn-github-refresh" type="button" @click="loadScriptFromGit(true)">
+                        <i class="fa fa-refresh mr-2"></i><span>Refresh</span>
+                    </button>
                 </control-group>
-
                 <control-group labelMessageKey="perfTest.config.scriptResources"
                                :data-step="shownBsTab ? 7 : undefined"
                                :data-intro="shownBsTab ? i18n('intro.config.basic.scriptResources') : undefined">
@@ -273,7 +275,8 @@
         display = {
             vuserPanel: false,
             detailConfig: false,
-            showScriptBtn: false,
+            showRevisionBtn: false,
+            showGitHubRefreshBtn: false,
         };
 
         durationMaxHour = 0;
@@ -316,7 +319,7 @@
             });
         }
 
-        loadScriptFromGit() {
+        loadScriptFromGit(refresh) {
             this.config.git.forEach(gitConfig => {
                 this.$http.get('/git/api/scripts', {
                     params: gitConfig,
@@ -328,8 +331,18 @@
                             path,
                         }));
                     this.scriptsMap[`${gitConfig.owner}/${gitConfig.repo}`] = scripts;
-                });
+                    if (refresh) {
+                        this.showSuccessMsg(this.i18n('script.message.refresh.success'));
+                    }
+                }).catch(() => this.showErrorMsg(this.i18n('script.message.refresh.error')));
             });
+        }
+
+        changeScriptStorage() {
+            this.display.showGitHubRefreshBtn = this.scriptStorage !== 'svn';
+            this.scripts = this.scriptsMap[this.scriptStorage];
+            this.test.scriptName = '';
+            this.$nextTick(() => this.$refs.scriptSelect.selectValue(''));
         }
 
         changeMaxAgentCount() {
@@ -343,12 +356,12 @@
 
         setScripts(selectedScript) {
             if (!selectedScript) {
-                this.display.showScriptBtn = false;
+                this.display.showRevisionBtn = false;
             } else if (!this.scripts.some(script => script.path === selectedScript)) {
                 this.scripts.push({ pathInShort: `(deleted) ${selectedScript}`, path: selectedScript, validated: -1 });
-                this.display.showScriptBtn = false;
+                this.display.showRevisionBtn = false;
             } else {
-                this.display.showScriptBtn = true;
+                this.display.showRevisionBtn = true;
             }
         }
 
@@ -380,12 +393,12 @@
                 this.test.config.scriptRevision = revision;
                 this.getTargetHosts();
                 this.getScriptResource();
-                this.display.showScriptBtn = true;
+                this.display.showRevisionBtn = true;
             } else {
                 this.test.config.scriptRevision = -1;
                 this.targetHosts = [];
                 this.resources = [];
-                this.display.showScriptBtn = false;
+                this.display.showRevisionBtn = false;
             }
         }
 
@@ -520,6 +533,10 @@
         get totalVuser() {
             return this.test.config.agentCount * this.test.config.vuserPerAgent;
         }
+
+        get showRevisonBtn() {
+            return this.display.showRevisionBtn && !this.display.showGitHubRefreshBtn;
+        }
     }
 </script>
 
@@ -617,8 +634,9 @@
             }
         }
 
-        .btn-script-revision {
+        .btn-script-revision, .btn-github-refresh {
             position: relative;
+            width: 82px;
 
             i {
                 vertical-align: baseline;
