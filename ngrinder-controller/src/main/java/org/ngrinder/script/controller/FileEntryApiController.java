@@ -37,6 +37,7 @@ import org.ngrinder.script.handler.ScriptHandler;
 import org.ngrinder.script.handler.ScriptHandlerFactory;
 import org.ngrinder.script.model.*;
 import org.ngrinder.script.service.FileEntryService;
+import org.ngrinder.script.service.GitHubService;
 import org.ngrinder.script.service.ScriptValidationService;
 import org.ngrinder.user.service.UserContext;
 import org.slf4j.Logger;
@@ -46,6 +47,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -79,6 +81,8 @@ public class FileEntryApiController {
 	private final MessageSource messageSource;
 
 	private final UserContext userContext;
+
+	private final GitHubService gitHubService;
 
 	@GetMapping("/handlers")
 	public List<ScriptHandler> getHandlers() {
@@ -384,5 +388,23 @@ public class FileEntryApiController {
 		FileEntry fileEntry = scriptValidationParams.getFileEntry();
 		fileEntry.setCreatedUser(user);
 		return scriptValidationService.validate(user, fileEntry, false, scriptValidationParams.getHostString());
+	}
+
+	@GetMapping("/github-config")
+	public List<GitHubConfig> getGitHubConfig(User user) throws FileNotFoundException {
+		return gitHubService.getGitHubConfig(user);
+	}
+
+	@PostMapping("/github-config")
+	public void createGitConfig(User user) {
+		fileEntryService.createGitHubConfig(user);
+	}
+
+	@GetMapping("/github")
+	public List<String> getGitHubScripts(User user, GitHubConfig gitHubConfig, boolean refresh) {
+		if (refresh) {
+			gitHubService.evictGitHubScriptCache(user);
+		}
+		return gitHubService.getScripts(user, gitHubConfig);
 	}
 }

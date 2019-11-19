@@ -326,8 +326,8 @@
             }
 
             this.config.git.forEach(gitConfig => {
-                this.$http.get('/git/api/scripts', {
                     params: gitConfig,
+                this.$http.get('/script/api/github', {
                 }).then(res => {
                     const scripts = res.data.map(path => ({
                             revision: -1,
@@ -355,7 +355,7 @@
         }
 
         createGitConfig() {
-            this.$http.post('/git/api/config')
+            this.$http.post('/script/api/github-config')
                 .then(() => {
                     this.ngrinder.config.existGitConfig = true;
                     this.$bootbox.confirm({

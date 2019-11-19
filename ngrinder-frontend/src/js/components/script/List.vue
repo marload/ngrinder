@@ -188,12 +188,7 @@
                         cancel: { label: this.i18n('common.button.cancel') },
                     },
                     onConfirm: () => this.$http.post('/script/api/delete', this.$refs.vuetable.selectedTo)
-                        .then(() => {
-                            if (this.$refs.vuetable.selectedTo.includes('.gitconfig.yml')) {
-                                this.ngrinder.config.existGitConfig = false;
-                            }
-                            this.refresh();
-                        }),
+                        .then(() => this.refresh()),
                 });
             }
         }
