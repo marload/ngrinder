@@ -27,6 +27,7 @@ import static org.ngrinder.common.util.Preconditions.checkNotNull;
 
 import com.nhncorp.lucy.security.xss.XssPreventer;
 import org.apache.commons.io.FilenameUtils;
+import org.kohsuke.github.GHTreeEntry;
 import org.ngrinder.common.util.PathUtils;
 import org.ngrinder.common.util.UrlUtils;
 import org.ngrinder.infra.spring.RemainedPath;
@@ -401,7 +402,7 @@ public class FileEntryApiController {
 	}
 
 	@GetMapping("/github")
-	public List<String> getGitHubScripts(User user, GitHubConfig gitHubConfig, boolean refresh) {
+	public List<GHTreeEntry> getGitHubScripts(User user, GitHubConfig gitHubConfig, boolean refresh) {
 		if (refresh) {
 			gitHubService.evictGitHubScriptCache(user);
 		}
