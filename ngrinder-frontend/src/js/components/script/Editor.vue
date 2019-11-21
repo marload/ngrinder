@@ -92,7 +92,7 @@
             'Shift-Ctrl-F / Cmd-Option-F : ' + i18n('script.editor.tip.replace') + '<br/>' +
             'Shift-Ctrl-R / Shift-Cmd-Option-F : ' + i18n('script.editor.tip.replaceAll') + '<br/>' +
             'F11 : ' + i18n('script.editor.tip.fullScreen') + '<br/>' +
-            'ESC : ' + i18n('script.editor.tip.back') ">Tip
+            'ESC : ' + i18n('script.editor.tip.back') ">Tip!!
         </code>
         <div class="float-right expand-btn-container">
             <a class="pointer-cursor" @click="validationResultExpanded = !validationResultExpanded">
